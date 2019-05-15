@@ -62,7 +62,7 @@ wss.on("connection", function(ws_client){
         var addr = msg.split(':')[0];
         var cont = msg.split(':')[1];
         // check address and decide what to do
-        if(addr == "/note"){ excl_broadcast(cont); }
+        if(addr == "/note"){ note_broadcast(cont); }
         // broadcast(msg);
 	});
 });
@@ -72,13 +72,13 @@ function broadcast(msg){
         clients[id].send(msg);
     })
 }
-function excl_broadcast(msg){
+function note_broadcast(msg){
     // handle data
     let props  = msg.split(",");
     let src_id = props[0];
     let new_m  = "" + props[1] + "," + props[2] + "," + props[3];
     Object.keys(clients).forEach(function each(id){
         if(id == src_id){ }
-        else{ clients[id].send(new_m); }
+        else{ clients[id].send("/note:"+new_m); }
     })
 }
