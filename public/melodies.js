@@ -37,7 +37,7 @@ function preload(){
 // overall initialization
 function init(){
     // setup websocket
-    ws = new WebSocket("ws://" + window.location.host);
+    ws = new WebSocket("wss://" + window.location.host);
 
     // three init
     let wid = window.innerWidth;
