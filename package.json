@@ -1,0 +1,23 @@
+{
+  "name": "interwoven_melodies",
+  "version": "0.0.1",
+  "description": "A web-based interconnected musical installation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicolaspe/interwoven_melodies.git"
+  },
+  "author": "Nicolas Escarpentier",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nicolaspe/interwoven_melodies/issues"
+  },
+  "homepage": "https://github.com/nicolaspe/interwoven_melodies#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "ws": "^7.0.0"
+  }
+}
