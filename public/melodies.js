@@ -7,13 +7,16 @@ let   scale   = [];
 const sc_mod  = [0, 12, 12]; 
 let pose_data = {};
 let synths;
+let renderer, scene, camera, composer;
+let effect1, effect2, effect3;
+let vid, uniforms;
 
 window.addEventListener('load', preload);
 
 // preload : get video feed + initialize PoseNet
 function preload(){
     // video feed element
-    let vid = document.getElementById("vid_feed");
+    vid = document.getElementById("vid_feed");
     vid.width  = vid_wid;   // needed for PoseNet
     vid.height = vid_hei;   // needed for PoseNet
 
@@ -36,8 +39,10 @@ function preload(){
 
 // overall initialization
 function init(){
+
     // setup websocket
     ws = new WebSocket("wss://" + window.location.host);
+
 
     // three init
     let wid = window.innerWidth;
@@ -46,11 +51,35 @@ function init(){
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(wid, hei);
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x000000 );
+	scene.background = new THREE.Color( 0x444444 );
 	camera = new THREE.PerspectiveCamera(60, wid/hei, 0.1, 5000);
-	camera.position.set( -10, 0, 0 );
+	camera.position.set( 0, 0, -10 );
     container = document.querySelector('#sketch');
     container.appendChild(renderer.domElement);
+
+    // postprocess
+    composer = new THREE.EffectComposer( renderer );
+    composer.addPass( new THREE.RenderPass( scene, camera ) );
+    effect1 = new THREE.ShaderPass( THREE.DotScreenShader );
+    effect1.uniforms[ 'scale' ].value = 4;
+    composer.addPass( effect1 );
+    effect2 = new THREE.ShaderPass( THREE.RGBShiftShader );
+    effect2.uniforms[ 'amount' ].value = 0.0015;
+    composer.addPass( effect2 );
+    effect3 = new THREE.ShaderPass( gridShader );
+    effect3.uniforms[ 'grid' ].value = 50.0;
+    composer.addPass( effect3 );
+
+
+    // create plane
+    let plane_geo = new THREE.PlaneGeometry(1280, 720, 1, 1);
+    let video_tex = new THREE.VideoTexture( vid );
+    let video_mat = new THREE.MeshBasicMaterial({ map: video_tex });
+    let video_plane = new THREE.Mesh( plane_geo, video_mat );
+    video_plane.position.set(0, 0, -550);
+    video_plane.lookAt( camera.position );
+    scene.add( video_plane );
+
 
     // tone init
     Tone.Transport.bpm = 120;
@@ -58,6 +87,7 @@ function init(){
     synths = [];
     create_synths();
     
+
     // model
     poseNet.on('pose', analyzePoses);
     pose_data["head"] = [];
@@ -65,12 +95,13 @@ function init(){
     pose_data["armR"] = [];
     pose_data["nrgy"] = [];
 
+
     // callbacks
     ws.onmessage = onWSMessage;
     window.addEventListener('resize', onWindowResize, true );
 
-    console.log("Interwoven Melodies, READY");
 
+    console.log("Interwoven Melodies, READY");
     animate();
 }
 
@@ -80,9 +111,10 @@ function animate() {
     renderer.setAnimationLoop( render );
 }
 function render(){
-    renderer.render( scene, camera );
-}
+    // uniforms["tex0"].value = vid;
 
+    composer.render( scene, camera );
+}
 
 // POSE 
 function analyzePoses(results){
@@ -152,6 +184,10 @@ function analyzePoses(results){
         pose_data["armR"][i] = [arm_Rx, arm_Ry];
         pose_data["nrgy"][i] = energy;
     }
+
+    // control graphics
+    let g = 50.0 - Math.min(49.0, Math.pow(2, results.length));
+    effect3.uniforms[ 'grid' ].value = g;
 }
 
 
@@ -264,6 +300,7 @@ function onWindowResize(){
   
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(wid, hei);
+    composer.setSize(wid, hei);
     camera.aspect = wid/hei;
     camera.updateProjectionMatrix();
 }
